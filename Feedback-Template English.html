@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuscript Feedback Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Palette: High Contrast Luxury */
+            --bg-deep: #121212;       
+            --bg-card: #1e1e1e;       
+            
+            /* Typography */
+            --text-main: #f0f0f0;     
+            --text-muted: #a0a0a0;    
+            --text-highlight: #ffffff; 
+            
+            /* Accents */
+            --gold-primary: #eebb44;  /* Bright Gold (Hover) */
+            --gold-dim: #8a702a;      /* Muted Gold (Base) */
+            
+            /* Borders */
+            --border-fine: 1px solid #333333;
+            --border-focus: 1px solid var(--gold-primary);
+            
+            /* Fonts */
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Inter', sans-serif; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 4rem;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+        }
+
+        /* HEADER */
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--gold-dim);
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 3rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--gold-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        h1 span {
+            display: block;
+            font-size: 0.9rem;
+            font-family: var(--font-sans);
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* ACCORDION SYSTEM */
+        .accordion-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative; 
+        }
+
+        .accordion-item {
+            border: var(--border-fine);
+            background: var(--bg-deep);
+            transition: all 0.3s ease;
+            position: relative; 
+            z-index: 1; 
+        }
+
+        /* Lift active item above everything else */
+        .accordion-item.active {
+            border: 1px solid var(--gold-dim);
+            background: var(--bg-card); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 100; 
+        }
+
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 1.25rem 1.5rem;
+            background: rgba(255,255,255,0.03);
+            user-select: none;
+        }
+        
+        .accordion-item.active .accordion-header {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .accordion-title {
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 0.02em;
+        }
+
+        .accordion-item.active .accordion-title {
+            color: var(--gold-primary);
+        }
+
+        .accordion-icon {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+            color: var(--gold-primary);
+        }
+
+        /* ANIMATION */
+        .accordion-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease-out;
+            opacity: 1; 
+            overflow: hidden; 
+        }
+
+        .accordion-item.active .accordion-content {
+            grid-template-rows: 1fr;
+            overflow: visible;
+            transition: grid-template-rows 0.3s ease-out, overflow 0s 0.3s;
+        }
+
+        .accordion-inner {
+            min-height: 0;
+        }
+        
+        .accordion-inner-padding {
+            padding: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .accordion-item.active .accordion-inner-padding {
+            opacity: 1;
+        }
+
+
+        /* FORM ELEMENTS */
+        .field-group {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gold-primary); 
+            margin-bottom: 0.75rem;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #444; 
+            border-radius: 4px;
+            color: var(--text-highlight);
+            font-family: var(--font-sans); 
+            font-size: 1rem;
+            line-height: 1.6;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--gold-primary);
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 1px var(--gold-primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        select option {
+            background: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        /* POWER HINTS */
+        .hint-wrapper {
+            position: relative;
+            display: inline-block;
+            z-index: 1000; 
+        }
+
+        .hint-trigger {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            cursor: help;
+            transition: all 0.2s;
+        }
+
+        .hint-trigger:hover {
+            border-color: var(--gold-primary);
+            color: var(--gold-primary);
+            background: rgba(238, 187, 68, 0.1);
+        }
+
+        .hint-box {
+            position: absolute;
+            bottom: 140%; 
+            left: -10px;
+            width: 350px;
+            background: #1a1a1a; 
+            border: 1px solid var(--gold-dim);
+            border-left: 4px solid var(--gold-primary);
+            padding: 1.25rem;
+            z-index: 9999; 
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.2s ease;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9); 
+            pointer-events: none;
+        }
+
+        .hint-box::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 14px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #1a1a1a transparent transparent transparent;
+        }
+
+        .hint-trigger:hover + .hint-box,
+        .hint-box:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .hint-box h4 {
+            color: var(--gold-primary);
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.25rem;
+        }
+
+        .hint-box ul {
+            list-style: none;
+        }
+
+        .hint-box li {
+            font-size: 0.9rem;
+            color: #d0d0d0;
+            margin-bottom: 0.4rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .hint-box li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--gold-primary);
+            font-weight: bold;
+        }
+
+        /* CARDS */
+        .cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid #333;
+            padding: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+
+        .card-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* CHIPS / TAGS */
+        .quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0 1rem 0;
+        }
+
+        .quick-tag {
+            font-size: 0.8rem;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #ccc;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-tag:hover {
+            border-color: var(--gold-primary);
+            color: var(--gold-primary);
+            background: rgba(238, 187, 68, 0.1);
+        }
+
+        /* BUTTONS */
+        .actions {
+            margin-top: 3rem;
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .btn {
+            background: var(--gold-dim); /* Muted by default */
+            color: #e0e0e0; /* Light text on muted bg */
+            border: none;
+            padding: 1rem 2.5rem;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--gold-primary); /* Bright on hover */
+            color: #121212; /* Dark text on bright bg */
+            box-shadow: 0 0 15px rgba(238, 187, 68, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid #555;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+            border-color: #888;
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .add-card-btn {
+            width: 100%;
+            padding: 1rem;
+            background: transparent;
+            border: 1px dashed #555;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .add-card-btn:hover {
+            border-color: var(--gold-primary);
+            color: var(--gold-primary);
+            background: rgba(238, 187, 68, 0.05);
+        }
+
+        .remove-btn {
+            background: transparent;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* Overlay & Copy Success */
+        .output-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .output-overlay.visible { display: flex; }
+
+        .output-content {
+            background: var(--bg-card);
+            border: 1px solid var(--gold-dim);
+            padding: 2.5rem;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .close-output-icon {
+            position: absolute;
+            top: 1rem; right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .close-output-icon:hover { color: var(--gold-primary); }
+
+        .copy-success {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gold-primary);
+            color: #000;
+            padding: 1rem 2.5rem;
+            font-weight: 700;
+            border-radius: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 2000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+        .copy-success.show { opacity: 1; }
+        
+        @media (max-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .container { padding: 2rem 1rem; }
+            .hint-box { width: 280px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><span>English Version</span>Feedback</h1>
+    </header>
+
+    <form id="feedbackForm">
+        
+        <div class="accordion-wrapper">
+            
+            <div class="accordion-item active">
+                <div class="accordion-header">
+                    <span class="accordion-title">I. Context</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="accordion-inner-padding">
+                            <div style="display:flex; gap: 1rem;">
+                                <div style="flex:1;">
+                                    <label>Type</label>
+                                    <select id="chapterType">
+                                        <option value="prolog">Prologue</option>
+                                        <option value="kapitel" selected>Chapter</option>
+                                        <option value="epilog">Epilogue</option>
+                                        <option value="szene">Scene</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                </div>
+                                <div style="flex:2;">
+                                    <label>Identifier</label>
+                                    <input type="text" id="chapterNumber">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <span class="accordion-title">II. Line Edits</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="accordion-inner-padding">
+                            <div class="field-group">
+                                <label>
+                                    Inline Comments & Prose
+                                    <div class="hint-wrapper">
+                                        <span class="hint-trigger">?</span>
+                                        <div class="hint-box">
+                                            <h4>Micro-Level Analysis</h4>
+                                            <ul>
+                                                <li><strong>Show vs. Tell:</strong> Is the emotion visceral or just labeled?</li>
+                                                <li><strong>Rhythm:</strong> Read it aloud. Does it stumble?</li>
+                                                <li><strong>Redundancy:</strong> Are adjectives repeating what the noun already implies?</li>
+                                                <li><strong>Clarity:</strong> Is the action physically possible as described?</li>
+                                                <li><strong>Filtering:</strong> "He saw," "She felt" -> Remove the filter.</li>
+                                                <li><strong>Dialogue Tags:</strong> Are they invisible or distracting?</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div id="quotesGrid" class="cards-grid">
+                                <div class="card-item" data-index="0">
+                                    <div class="card-header">
+                                        <span class="card-label">Ref. 01</span>
+                                        <button type="button" class="remove-btn" onclick="removeQuote(0)" style="display:none;">REMOVE</button>
+                                    </div>
+                                    <textarea class="quote-text" style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: #fff; margin-bottom: 1rem;"></textarea>
+                                    
+                                    <div class="quick-tags">
+                                        <span class="quick-tag" onclick="insertTag(this, 'Show, don\'t tell.')">Show vs Tell</span>
+                                        <span class="quick-tag" onclick="insertTag(this, 'Filter word.')">Filter Word</span>
+                                        <span class="quick-tag" onclick="insertTag(this, 'Clunky phrasing.')">Clunky</span>
+                                        <span class="quick-tag" onclick="insertTag(this, 'Beautiful imagery.')">Beautiful</span>
+                                        <span class="quick-tag" onclick="insertTag(this, 'Info dump.')">Info Dump</span>
+                                        <span class="quick-tag" onclick="insertTag(this, 'Strong voice.')">Voice</span>
+                                        <span class="quick-tag" onclick="insertTag(this, 'On the nose.')">On the nose</span>
+                                    </div>
+                                    
+                                    <textarea class="quote-comment" rows="2"></textarea>
+                                </div>
+                                <button type="button" class="add-card-btn" onclick="addQuote()">+ ADD ANOTHER QUOTE</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <span class="accordion-title">III. Character</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="accordion-inner-padding">
+                            <div class="field-group">
+                                <label>
+                                    Character Development
+                                    <div class="hint-wrapper">
+                                        <span class="hint-trigger">?</span>
+                                        <div class="hint-box">
+                                            <h4>Deep Dive Questions</h4>
+                                            <ul>
+                                                <li><strong>Agency:</strong> Does the character make choices or do things happen to them?</li>
+                                                <li><strong>Goal:</strong> What do they want right now? Is it clear?</li>
+                                                <li><strong>Consistency:</strong> Does this match their established personality?</li>
+                                                <li><strong>Voice:</strong> Would I recognize them without a name tag?</li>
+                                                <li><strong>Inner Life:</strong> Is the subtext contradicting the dialogue? (Good!)</li>
+                                                <li><strong>Flaws:</strong> Are their weaknesses impacting the scene?</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div id="characterGrid" class="cards-grid">
+                                <div class="card-item" data-index="0">
+                                    <div class="card-header">
+                                        <span class="card-label">Subject 01</span>
+                                        <button type="button" class="remove-btn" onclick="removeCharacter(0)" style="display:none;">REMOVE</button>
+                                    </div>
+                                    <input type="text" class="char-name" placeholder="Character Name" style="margin-bottom: 1rem; font-weight: bold;">
+                                    <textarea class="char-feedback" placeholder="Feedback on agency, voice, arc..."></textarea>
+                                </div>
+                                <button type="button" class="add-card-btn" onclick="addCharacter()">+ ADD SUBJECT</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <span class="accordion-title">IV. Narrative Arc</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="accordion-inner-padding">
+                            <div class="field-group">
+                                <label>
+                                    Plot Dynamics
+                                    <div class="hint-wrapper">
+                                        <span class="hint-trigger">?</span>
+                                        <div class="hint-box">
+                                            <h4>Structural Integrity</h4>
+                                            <ul>
+                                                <li><strong>The Hook:</strong> Does the scene start late enough?</li>
+                                                <li><strong>The Button:</strong> Does it end early enough? Is there a cliffhanger?</li>
+                                                <li><strong>Stakes:</strong> What is lost if the character fails here?</li>
+                                                <li><strong>Causality:</strong> Does this scene strictly lead to the next? (Therefore...)</li>
+                                                <li><strong>Conflict:</strong> Is there an obstacle (internal/external)?</li>
+                                                <li><strong>Pacing:</strong> Does the speed match the emotional content?</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </label>
+                                <textarea id="plot" placeholder="Analyze tension, stakes, and causality..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <span class="accordion-title">V. Purpose</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="accordion-inner-padding">
+                            <div class="field-group">
+                                <label>
+                                    Scene Function
+                                    <div class="hint-wrapper">
+                                        <span class="hint-trigger">?</span>
+                                        <div class="hint-box">
+                                            <h4>Why does this exist?</h4>
+                                            <ul>
+                                                <li>Does it reveal information crucial to the plot?</li>
+                                                <li>Does it deepen a key relationship?</li>
+                                                <li>Does it establish the atmosphere/world?</li>
+                                                <li><strong>The Test:</strong> If you delete this chapter, does the story break? If not, cut it.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </label>
+                                <textarea id="chapterFunction" placeholder="What does this chapter achieve for the overall story?"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <span class="accordion-title">VI. Impressions</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="accordion-inner-padding">
+                            <div class="field-group">
+                                <label>Critical Notes</label>
+                                <textarea id="critique" rows="3" placeholder="Major structural issues, plot holes, logic gaps..."></textarea>
+                            </div>
+                            <div class="field-group">
+                                <label>Highlights</label>
+                                <textarea id="positive" rows="3" placeholder="Standout moments, beautiful prose, strong character beats..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <div class="actions">
+            <button type="button" class="btn" onclick="generateFeedback()">COMPILE FEEDBACK</button>
+            <button type="button" class="btn btn-secondary" onclick="clearForm()">Reset Form</button>
+        </div>
+
+    </form>
+</div>
+
+<div class="output-overlay" id="outputOverlay">
+    <div class="output-content">
+        <span class="close-output-icon" onclick="closeOverlay()">×</span>
+        <h2 style="font-family: var(--font-serif); color: var(--gold-primary); margin-bottom: 1.5rem;">Preview</h2>
+        <div class="output-preview" id="outputPreview" style="color: #ddd; font-family: 'Times New Roman', serif; line-height: 1.6; flex-grow: 1; overflow-y: auto;"></div>
+        
+        <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+            <button type="button" class="btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button type="button" class="btn btn-secondary" onclick="closeOverlay()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="copy-success" id="copySuccess">✓ COPIED TO CLIPBOARD</div>
+
+<script>
+    // --- ACCORDION LOGIC ---
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const item = header.parentElement;
+            item.classList.toggle('active');
+        });
+    });
+
+    let quoteCount = 1;
+    let characterCount = 1;
+
+    // --- FORM LOGIC ---
+
+    function insertTag(tagElement, text) {
+        const card = tagElement.closest('.card-item');
+        const textarea = card.querySelector('.quote-comment');
+        const currentValue = textarea.value;
+        textarea.value = currentValue + (currentValue && !currentValue.endsWith(' ') ? ' ' : '') + text;
+        textarea.focus();
+        
+        tagElement.style.borderColor = 'var(--gold-primary)';
+        setTimeout(() => tagElement.style.borderColor = '', 200);
+    }
+
+    function addQuote() {
+        const grid = document.getElementById('quotesGrid');
+        const addBtn = grid.querySelector('.add-card-btn');
+        const card = document.createElement('div');
+        card.className = 'card-item';
+        card.dataset.index = quoteCount;
+        card.innerHTML = `
+            <div class="card-header">
+                <span class="card-label">Ref. 0${quoteCount + 1}</span>
+                <button type="button" class="remove-btn" onclick="removeQuote(${quoteCount})">REMOVE</button>
+            </div>
+            <textarea class="quote-text" style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: #fff; margin-bottom: 1rem;"></textarea>
+            <div class="quick-tags">
+                <span class="quick-tag" onclick="insertTag(this, 'Show, don\\'t tell.')">Show vs Tell</span>
+                <span class="quick-tag" onclick="insertTag(this, 'Filter word.')">Filter Word</span>
+                <span class="quick-tag" onclick="insertTag(this, 'Clunky phrasing.')">Clunky</span>
+                <span class="quick-tag" onclick="insertTag(this, 'Beautiful imagery.')">Beautiful</span>
+                <span class="quick-tag" onclick="insertTag(this, 'Info dump.')">Info Dump</span>
+                <span class="quick-tag" onclick="insertTag(this, 'Strong voice.')">Voice</span>
+            </div>
+            <textarea class="quote-comment" rows="2"></textarea>
+        `;
+        grid.insertBefore(card, addBtn);
+        quoteCount++;
+        updateRemoveButtons();
+    }
+
+    function removeQuote(index) {
+        const card = document.querySelector(`#quotesGrid .card-item[data-index="${index}"]`);
+        if(card) { card.remove(); updateRemoveButtons(); }
+    }
+
+    function addCharacter() {
+        const grid = document.getElementById('characterGrid');
+        const addBtn = grid.querySelector('.add-card-btn');
+        const card = document.createElement('div');
+        card.className = 'card-item';
+        card.dataset.index = characterCount;
+        card.innerHTML = `
+            <div class="card-header">
+                <span class="card-label">Subject 0${characterCount + 1}</span>
+                <button type="button" class="remove-btn" onclick="removeCharacter(${characterCount})">REMOVE</button>
+            </div>
+            <input type="text" class="char-name" placeholder="Character Name" style="margin-bottom: 1rem; font-weight: bold;">
+            <textarea class="char-feedback" placeholder="Feedback on agency, voice, arc..."></textarea>
+        `;
+        grid.insertBefore(card, addBtn);
+        characterCount++;
+        updateRemoveButtons();
+    }
+
+    function removeCharacter(index) {
+        const card = document.querySelector(`#characterGrid .card-item[data-index="${index}"]`);
+        if(card) { card.remove(); updateRemoveButtons(); }
+    }
+
+    function updateRemoveButtons() {
+        const qCards = document.querySelectorAll('#quotesGrid .card-item');
+        qCards.forEach(c => c.querySelector('.remove-btn').style.display = qCards.length > 1 ? 'block' : 'none');
+        const cCards = document.querySelectorAll('#characterGrid .card-item');
+        cCards.forEach(c => c.querySelector('.remove-btn').style.display = cCards.length > 1 ? 'block' : 'none');
+    }
+
+    // --- GENERATION LOGIC ---
+
+    function getChapterTitle() {
+        const type = document.getElementById('chapterType').value;
+        const number = document.getElementById('chapterNumber').value.trim();
+        const labels = { 'prolog': 'Prologue', 'kapitel': 'Chapter', 'epilog': 'Epilogue', 'szene': 'Scene' };
+        if (type === 'custom') return number || 'Feedback';
+        return number ? `${labels[type]} ${number}` : labels[type];
+    }
+
+    let generatedHTML = '';
+
+    function generateFeedback() {
+        const title = getChapterTitle();
+        const plot = document.getElementById('plot').value.trim();
+        const func = document.getElementById('chapterFunction').value.trim();
+        const crit = document.getElementById('critique').value.trim();
+        const pos = document.getElementById('positive').value.trim();
+
+        // Data collection
+        const quotes = [];
+        document.querySelectorAll('#quotesGrid .card-item').forEach(c => {
+            const t = c.querySelector('.quote-text').value.trim();
+            const cm = c.querySelector('.quote-comment').value.trim();
+            if(t || cm) quotes.push({t, cm});
+        });
+
+        const chars = [];
+        document.querySelectorAll('#characterGrid .card-item').forEach(c => {
+            const n = c.querySelector('.char-name').value.trim();
+            const f = c.querySelector('.char-feedback').value.trim();
+            if(n || f) chars.push({n: n || 'Unknown', f});
+        });
+
+        // HTML Construction
+        generatedHTML = `<p style="font-family: 'Times New Roman', serif; font-size: 14pt; font-weight: bold;">${title}</p>`;
+        
+        quotes.forEach(q => {
+            if(q.t) generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 13pt; font-style: italic;">"${q.t}"</p>`;
+            if(q.cm) generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt; margin-left: 40px;">${q.cm}</p>`;
+        });
+
+        const hasSummary = chars.length || plot || func || crit || pos;
+        if(hasSummary && quotes.length) generatedHTML += `<hr style="margin: 20px 0;"><p style="font-family: 'Times New Roman', serif; font-size: 12pt; font-weight: bold;">Summary:</p>`;
+
+        if(chars.length) {
+            generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt; font-weight: bold; margin-top: 15px;">Character Dynamics:</p>`;
+            // NO COLON HERE AS REQUESTED:
+            chars.forEach(c => generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt;"><strong>${c.n}</strong> ${c.f}</p>`);
+        }
+
+        if(plot) generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt; font-weight: bold; margin-top: 15px;">Narrative Arc:</p><p style="font-family: 'Times New Roman', serif; font-size: 12pt;">${plot}</p>`;
+        if(func) generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt; font-weight: bold; margin-top: 15px;">Purpose:</p><p style="font-family: 'Times New Roman', serif; font-size: 12pt;">${func}</p>`;
+        if(crit) generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt; font-weight: bold; margin-top: 15px;">Critical Notes:</p><p style="font-family: 'Times New Roman', serif; font-size: 12pt;">${crit}</p>`;
+        if(pos) generatedHTML += `<p style="font-family: 'Times New Roman', serif; font-size: 12pt; font-weight: bold; margin-top: 15px;">Highlights:</p><p style="font-family: 'Times New Roman', serif; font-size: 12pt;">${pos}</p>`;
+
+        // Visual Preview
+        document.getElementById('outputPreview').innerHTML = generatedHTML;
+        document.getElementById('outputOverlay').classList.add('visible');
+    }
+
+    function closeOverlay() {
+        document.getElementById('outputOverlay').classList.remove('visible');
+    }
+
+    function copyToClipboard() {
+        const blobHTML = new Blob([generatedHTML], {type: 'text/html'});
+        const blobText = new Blob([generatedHTML.replace(/<[^>]*>/g, '\n').replace(/\n+/g, '\n').trim()], {type: 'text/plain'});
+        const item = new ClipboardItem({'text/html': blobHTML, 'text/plain': blobText});
+        
+        navigator.clipboard.write([item]).then(() => {
+            const msg = document.getElementById('copySuccess');
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 2000);
+            // TIMEOUT REMOVED HERE
+        });
+    }
+
+    function clearForm() {
+        document.getElementById('feedbackForm').reset();
+        document.getElementById('chapterType').value = 'kapitel';
+        location.reload(); 
+    }
+</script>
+
+</body>
+</html>
